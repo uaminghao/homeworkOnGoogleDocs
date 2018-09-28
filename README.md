@@ -30,7 +30,7 @@ Example:
 python create_and_share_google_docs.py -c cmput391f18 -hw "homework 1" -t token.json -s students.json
 ```
 
-Would create the following documents with the students as in the JSON file above: **cmput391f18 homwork 1 Wonderland, Alice (123) **, and **cmput391f18 homwork 1 Builder, Bob (234) ** inside a folder called **cmput391f18 homwork 1** (anywhere in the drive).
+Would create the following documents with the students as in the JSON file above: **cmput391f18 homwork 1 Wonderland, Alice (123)**, and **cmput391f18 homwork 1 Builder, Bob (234)** inside a folder called **cmput391f18 homwork 1** (anywhere in the drive).
 
 
 # Initial Setup
