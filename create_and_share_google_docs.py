@@ -70,12 +70,12 @@ def main(token_file, students, coursePrefix, homeworkName):
 
 '''
 
-Uses argparse to parse the required outputs
+Uses argparse to parse the required parameters
 
 '''
 def parseArglist():
     from argparse import RawTextHelpFormatter
-    parser = argparse.ArgumentParser(description='Creates and shares document on Google Drive for students to write homework.\n\n' +
+    parser = argparse.ArgumentParser(description='Creates and shares documents on Google Drive for students to write homework.\n\n' +
         'Needs:\n a JSON \'token file\' generated when you authenticate the first time you run this program\n '+
         'a JSON file with student names and email addresses,\n a course prefix and\n a homework name.\n\n'+
         'There must be a folder on the drive account named <prefix>+\' \'+<homework>.\n\n'+
