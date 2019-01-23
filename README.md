@@ -5,12 +5,13 @@ homework for grading.
 
 # Command Line Parameters
 
-* `-c` or `--course`: a course code, used as a prefix for the documents **and also** as part of the name of the folder where the documents will be created
-* `-hw` or `--howmeork`: the homework name, also used as part of the document names and the folder name
-* `-s` or `--students`: JSON file with three fields per student: name, email, and id, which are used to name the document
 * `-t` or `--token`: JSON file with the credentials
+* `-p` or `--prefix`: a mnemonic prefix that will start the name of the document for the student (e.g., `cmputXYZ-wTT-hwN`)
+* `-f` or `--folder`: the name of the folder in drive where the documents are stored
+* `-s` or `--students`: JSON file with three fields per student: name, email, and id, which are used to name the document
 
-Sample JSON file:
+
+Sample JSON file with student list:
 
 ```
 [
@@ -21,24 +22,23 @@ Sample JSON file:
 
 # Naming of Folders and Documents
 
-Folders and files on Google Drive are accessed via internal identifiers (instead of paths). The code first searches for a directory (anywhere) in the Google Drive whose name is the concatenation of the course prefix and the homework name, separated by a space. If no such folder exists, the program exits.
+Folders and files on Google Drive are accessed via internal identifiers (instead of paths). The program first searches for a directory (anywhere) in the Google Drive corresponding to the provided access token matching the parameter `folder`.
 
-If the folder is found, the program creates a blank document for each student in the student file, naming each file with the folder name (so that the student knows what the document is about) followed by the student name and the provided student id in parenthesis.
+If the folder is found, the program creates a blank document for each student listed in the student file, naming each file with the prefix (so that the student knows what the document is about) followed by the student name and the provided student id in parenthesis.
 
 Example:
 ```
-python create_and_share_google_docs.py -c cmput391f18 -hw "homework 1" -t token.json -s students.json
+python create_and_share_google_docs.py -f cmput391w19hw1 -p "cmput391 w19 hw1" -t token.json -s students.json
 ```
 
-Would create the following documents with the students as in the JSON file above: **cmput391f18 homework 1 Wonderland, Alice (123)**, and **cmput391f18 homework 1 Builder, Bob (234)** inside a folder called **cmput391f18 homework 1** (anywhere in the drive).
-
+Would create documents `cmput391 w19 hw1 - Wonderland, Alice (123)` and `cmput391 w19 hw1 - Builder, Bob (s34)` inside folder with name **cmput391w19hw1**.
 
 # Initial Setup
 
 1. Enable the Drive API (follow the [Python Quickstart](https://developers.google.com/drive/api/v3/quickstart/python))
 2. Run the code from the command line and authenticate to the account that will own the documents (e.g., an institutional account for the course)
 
-After these steps there should be a JSON file, named as indicated by the `-t` parameter, with the credentials needed by the API. It might be best to do the setup with an empty student file.
+After these steps there should be a JSON file, named as indicated by the `-t` parameter, with the credentials needed by the API. It might be best to test everything with an empty student file.
 
 
 ### Legal
