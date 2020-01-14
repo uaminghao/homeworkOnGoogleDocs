@@ -37,7 +37,7 @@ def main(driveFolder, students, homeworkPrefix):
 
             # test if document exists for this student already
             check = service.files().list(q="mimeType = 'application/vnd.google-apps.document' and name='"+documentName+"'",
-        pageSize=1, fields="nextPageToken, files(id, name)").execute().get('files', [])
+                                         pageSize=1, fields="nextPageToken, files(id, name)").execute().get('files', [])
 
             if check:
                 print(student['name'] +' already has a file on drive for this assignment.')
@@ -63,7 +63,7 @@ def main(driveFolder, students, homeworkPrefix):
             }
             try:
                 service.permissions().create(fileId=file_id, body=new_permission).execute()
-            except errors.HttpError, error:
+            except HttpError as error:
                 print ('An error occurred: %s' % error)
 
 '''
