@@ -5,7 +5,6 @@ homework for grading.
 
 # Command Line Parameters
 
-* `-t` or `--token`: JSON file with the credentials
 * `-p` or `--prefix`: a mnemonic prefix that will start the name of the document for the student (e.g., `cmputXYZ-wTT-hwN`)
 * `-f` or `--folder`: the name of the folder in drive where the documents are stored
 * `-s` or `--students`: JSON file with three fields per student: name, email, and id, which are used to name the document
@@ -20,6 +19,11 @@ Sample JSON file with student list:
 ]
 ```
 
+# Initial Setup
+
+1. Enable the Drive API for the institutional account used on the course (follow the [Python Quickstart](https://developers.google.com/drive/api/v3/quickstart/python))
+2. Download the credentials and put them on the same folder as the script.
+
 # Naming of Folders and Documents
 
 Folders and files on Google Drive are accessed via internal identifiers (instead of paths). The program first searches for a directory (anywhere) in the Google Drive corresponding to the provided access token matching the parameter `folder`.
@@ -28,18 +32,12 @@ If the folder is found, the program creates a blank document for each student li
 
 Example:
 ```
-python create_and_share_google_docs.py -f cmput391w19hw1 -p "cmput391 w19 hw1" -t token.json -s students.json
+python create_and_share_google_docs.py -f cmput391w19hw1 -p "cmput391 w19 hw1" -s students.json
 ```
 
 Would create documents `cmput391 w19 hw1 - Wonderland, Alice (123)` and `cmput391 w19 hw1 - Builder, Bob (s34)` inside folder with name **cmput391w19hw1**.
 
-# Initial Setup
-
-1. Enable the Drive API (follow the [Python Quickstart](https://developers.google.com/drive/api/v3/quickstart/python))
-2. Run the code from the command line and authenticate to the account that will own the documents (e.g., an institutional account for the course)
-
-After these steps there should be a JSON file, named as indicated by the `-t` parameter, with the credentials needed by the API. It might be best to test everything with an empty student file.
-
+It might be best to test everything with an empty student file.
 
 ### Legal
 
