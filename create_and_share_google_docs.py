@@ -69,7 +69,7 @@ def add_permission(email, service, file_id):
         'role': 'writer'
     }
     try:
-        service.permissions().create(fileId=file_id, body=new_permission).execute()
+        service.permissions().create(fileId=file_id, body=new_permission, sendNotificationEmail=False).execute()
     except HttpError as error:
         print ('An error occurred: %s' % error)
 
