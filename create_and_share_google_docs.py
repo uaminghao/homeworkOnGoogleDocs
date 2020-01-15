@@ -10,7 +10,7 @@ import json
 # If modifying these scopes, delete the file token.json.
 SCOPES = 'https://www.googleapis.com/auth/drive'
 
-def main(driveFolder, students, homeworkPrefix):
+def main(driveFolder, students, homeworkAffix):
     flow = InstalledAppFlow.from_client_secrets_file(
                 'credentials.json', SCOPES)
     creds = flow.run_local_server(port=0)
@@ -33,14 +33,14 @@ def main(driveFolder, students, homeworkPrefix):
             print('Found folder with Drive id: '+folder_id)
 
         for student in students:
-            documentName = homeworkPrefix + ' - ' + student['name'] + ' (' + student['id']+')'
+            documentName =  student['prename'] + '_' + student['surname'] + '_' + homeworkAffix
 
             # test if document exists for this student already
             check = service.files().list(q="mimeType = 'application/vnd.google-apps.document' and name='"+documentName+"'",
                                          pageSize=1, fields="nextPageToken, files(id, name)").execute().get('files', [])
 
             if check:
-                print(student['name'] +' already has a file on drive for this assignment.')
+                print(student['prename'] + " " + student['surname'] +' already has a file on drive for this assignment.')
                 continue
 
             file_metadata = {
@@ -74,14 +74,13 @@ Uses argparse to parse the required parameters
 def parseArglist():
     from argparse import RawTextHelpFormatter
     parser = argparse.ArgumentParser(description='Creates and shares documents on Google Drive for students to write homework.\n\n' +
-        'Needs:\n a JSON \'token file\' generated when you authenticate the first time you run this program\n '+
-        'a JSON file with student names and email addresses,\n a course prefix and\n a homework name.\n\n'+
-        'There must be a folder on the drive account named <prefix>+\' \'+<homework>.\n\n'+
-        'Each document is named <prefix>+\' \'+<homework>+\' \'+<student name> and stored \nin that folder.',
+        'Needs:\n a JSON file with student names and email addresses,\n a homework affix, \n a folder name.\n '+
+        'There must be a folder on the drive account named with the same name as the script\'s parameter.\n\n'+
+        'Each document is named <student prename>_<student surname>_<homework affix> and stored \nin that folder.',
         formatter_class=RawTextHelpFormatter)
     requiredArgs = parser.add_argument_group('required arguments')
     requiredArgs.add_argument('-s', '--students', help='JSON file with student names and emails', required=True)
-    requiredArgs.add_argument('-p', '--prefix', help='prefix identifying assignment (e.g., cmputXXXfXX-hwZZ)', required=True)
+    requiredArgs.add_argument('-a', '--affix', help='affix identifying assignment (e.g., cmputXXXfXX-hwZZ)', required=False)
     requiredArgs.add_argument('-f', '--folder', help='folder in Google drive where files are created', required=True)
 
     args = parser.parse_args()
@@ -102,7 +101,7 @@ if __name__ == '__main__':
         students = json.load(f)
         f.close()
 
-    main(args.folder, students, args.prefix)
+    main(args.folder, students, args.affix)
 
     # write back with the drive ids for the documents.
     with open(args.students, 'w') as f:

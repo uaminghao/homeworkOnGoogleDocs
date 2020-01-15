@@ -5,7 +5,7 @@ homework for grading.
 
 # Command Line Parameters
 
-* `-p` or `--prefix`: a mnemonic prefix that will start the name of the document for the student (e.g., `cmputXYZ-wTT-hwN`)
+* `-a` or `--affix`: a mnemonic affix that will end the name of the document for the student (e.g., `cmputXYZ-wTT-hwN`)
 * `-f` or `--folder`: the name of the folder in drive where the documents are stored
 * `-s` or `--students`: JSON file with three fields per student: name, email, and id, which are used to name the document
 
@@ -14,8 +14,8 @@ Sample JSON file with student list:
 
 ```
 [
-  {"name": "Wonderland, Alice", "email": "alice@wonderland", "id": "123"},
-  {"name": "Builder, Bob", "email": "bob@builder", "id": "234"}
+  {"prename": "Alice", "surname": "Wonderland", "email": "alice@wonderland", "student_id": "123"},
+  {"prename": "Bob", "surname": "Builder", "email": "bob@builder", "student_id": "234"}
 ]
 ```
 
@@ -32,10 +32,10 @@ If the folder is found, the program creates a blank document for each student li
 
 Example:
 ```
-python create_and_share_google_docs.py -f cmput391w19hw1 -p "cmput391 w19 hw1" -s students.json
+python create_and_share_google_docs.py -f cmput391w19hw1 -a "cmput391 w19 hw1" -s students.json
 ```
 
-Would create documents `cmput391 w19 hw1 - Wonderland, Alice (123)` and `cmput391 w19 hw1 - Builder, Bob (s34)` inside folder with name **cmput391w19hw1**.
+Would create documents `Alice_Wonderland_cmput391 w19 hw1` and `Bob_Builder_cmput391 w19 hw1` inside folder with name **cmput391w19hw1**.
 
 It might be best to test everything with an empty student file.
 
