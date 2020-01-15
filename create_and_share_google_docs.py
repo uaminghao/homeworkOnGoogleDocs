@@ -53,18 +53,25 @@ def main(driveFolder, students, homeworkAffix):
             studentSharedDoc = service.files().create(body=file_metadata, fields='id').execute()
             file_id = studentSharedDoc.get('id')
 
-            print(student['name'] + " " + file_id)
-            student[homeworkPrefix + ' drive id'] = file_id
+            print(student['prename'] + " " + student['surname'] + " " + file_id)
+            student[homeworkAffix + ' drive id'] = file_id
 
-            new_permission = {
-                'emailAddress': student['email'],
-                'type': 'user',
-                'role': 'writer'
-            }
-            try:
-                service.permissions().create(fileId=file_id, body=new_permission).execute()
-            except HttpError as error:
-                print ('An error occurred: %s' % error)
+            if 'team' in student.keys():
+                for member_email in student['team']:
+                    add_permission(member_email, service, file_id)
+            else:
+                add_permission(student['email'], service, file_id)
+
+def add_permission(email, service, file_id):
+    new_permission = {
+        'emailAddress': email,
+        'type': 'user',
+        'role': 'writer'
+    }
+    try:
+        service.permissions().create(fileId=file_id, body=new_permission).execute()
+    except HttpError as error:
+        print ('An error occurred: %s' % error)
 
 '''
 
