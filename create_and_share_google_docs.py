@@ -6,7 +6,6 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 import argparse
 import json
 
-
 # If modifying these scopes, delete the file token.json.
 SCOPES = 'https://www.googleapis.com/auth/drive'
 
@@ -52,15 +51,22 @@ def main(driveFolder, students, homeworkAffix):
 
             studentSharedDoc = service.files().create(body=file_metadata, fields='id').execute()
             file_id = studentSharedDoc.get('id')
+            list_permissions = service.permissions().list(fileId=file_id).execute()
+            permissions = list_permissions.get('permissions')
 
             print(student['prename'] + " " + student['surname'] + " " + file_id)
             student[homeworkAffix + ' drive id'] = file_id
+
+            for p in permissions:
+                if p['role'] != 'owner':
+                    delete_permission(file_id, p['id'], service)
 
             if 'team' in student.keys():
                 for member_email in student['team']:
                     add_permission(member_email, service, file_id)
             else:
                 add_permission(student['email'], service, file_id)
+            add_permissions_to_intructors(service, file_id)
 
 def add_permission(email, service, file_id):
     new_permission = {
@@ -72,6 +78,20 @@ def add_permission(email, service, file_id):
         service.permissions().create(fileId=file_id, body=new_permission, sendNotificationEmail=False).execute()
     except HttpError as error:
         print ('An error occurred: %s' % error)
+
+def delete_permission(file_id, permission_id, service):
+    try:
+        service.permissions().delete(fileId=file_id, permissionId=permission_id).execute()
+    except HttpError as error:
+        print ('An error occurred: %s' % error)
+
+def add_permissions_to_intructors(service, file_id):
+    with open('instructional_team.json', 'r') as f:
+        instructors = json.load(f)
+        f.close()
+
+    for i in instructors:
+        add_permission(i['email'], service, file_id)
 
 '''
 
