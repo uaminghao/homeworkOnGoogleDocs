@@ -38,7 +38,7 @@ def main(driveFolder, students, type, homework_affix, instructors):
             print('Found folder with Drive id: '+folder_id)
 
         for student in students:
-            documentName =  student['prename'] + '_' + student['surname'] + '_' + homeworkAffix
+            documentName =  student['prename'] + '_' + student['surname'] + string_or_empty(homework_affix)
 
             # test if document exists for this student already
             check = service.files().list(q="mimeType = 'application/vnd.google-apps.document' and name='"+documentName+"'",
@@ -61,7 +61,7 @@ def main(driveFolder, students, type, homework_affix, instructors):
             permissions = list_permissions.get('permissions')
 
             print(student['prename'] + " " + student['surname'] + " " + file_id)
-            student[homeworkAffix + ' drive id'] = file_id
+            student[string_or_empty(homework_affix) + ' drive id'] = file_id
 
             for p in permissions:
                 if p['role'] != 'owner':
