@@ -72,7 +72,9 @@ def main(driveFolder, students, type, homework_affix, instructors):
                     add_permission(member_email, service, file_id)
             else:
                 add_permission(student['email'], service, file_id)
-            add_permissions_to_intructors(service, file_id)
+
+            if instructors:
+                add_permissions_to_intructors(instructors, service, file_id)
 
 def add_permission(email, service, file_id):
     new_permission = {
@@ -91,11 +93,7 @@ def delete_permission(file_id, permission_id, service):
     except HttpError as error:
         print ('An error occurred: %s' % error)
 
-def add_permissions_to_intructors(service, file_id):
-    with open('instructional_team.json', 'r') as f:
-        instructors = json.load(f)
-        f.close()
-
+def add_permissions_to_intructors(instructors, service, file_id):
     for i in instructors:
         add_permission(i['email'], service, file_id)
 
@@ -136,7 +134,14 @@ if __name__ == '__main__':
         students = json.load(f)
         f.close()
 
-    main(args.folder, students, args.affix)
+    if args.instructors:
+        with open(args.instructors, 'r') as f:
+            instructors = json.load(f)
+            f.close()
+    else:
+        instructors = None
+
+    main(args.folder, students, args.type, args.affix, instructors)
 
     # write back with the drive ids for the documents.
     with open(args.students, 'w') as f:
