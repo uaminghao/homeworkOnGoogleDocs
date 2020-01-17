@@ -6,10 +6,16 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 import argparse
 import json
 
+TYPES = {'document': 'application/vnd.google-apps.document',
+         'folder': 'application/vnd.google-apps.folder'}
+
 # If modifying these scopes, delete the file token.json.
 SCOPES = 'https://www.googleapis.com/auth/drive'
 
-def main(driveFolder, students, homeworkAffix):
+def string_or_empty(string):
+    return '_' + string  if string else ''
+
+def main(driveFolder, students, type, homework_affix, instructors):
     flow = InstalledAppFlow.from_client_secrets_file(
                 'credentials.json', SCOPES)
     creds = flow.run_local_server(port=0)
@@ -32,7 +38,7 @@ def main(driveFolder, students, homeworkAffix):
             print('Found folder with Drive id: '+folder_id)
 
         for student in students:
-            documentName =  student['prename'] + '_' + student['surname'] + '_' + homeworkAffix
+            documentName =  student['prename'] + '_' + student['surname'] + string_or_empty(homework_affix)
 
             # test if document exists for this student already
             check = service.files().list(q="mimeType = 'application/vnd.google-apps.document' and name='"+documentName+"'",
@@ -44,7 +50,7 @@ def main(driveFolder, students, homeworkAffix):
 
             file_metadata = {
                'name': documentName,
-               'mimeType' : 'application/vnd.google-apps.document',
+               'mimeType': TYPES[type] if type else TYPES['document'],
                'parents': [folder_id],
                "writersCanShare": False
             }
@@ -55,7 +61,7 @@ def main(driveFolder, students, homeworkAffix):
             permissions = list_permissions.get('permissions')
 
             print(student['prename'] + " " + student['surname'] + " " + file_id)
-            student[homeworkAffix + ' drive id'] = file_id
+            student[string_or_empty(homework_affix) + ' drive id'] = file_id
 
             for p in permissions:
                 if p['role'] != 'owner':
@@ -66,7 +72,9 @@ def main(driveFolder, students, homeworkAffix):
                     add_permission(member_email, service, file_id)
             else:
                 add_permission(student['email'], service, file_id)
-            add_permissions_to_intructors(service, file_id)
+
+            if instructors:
+                add_permissions_to_intructors(instructors, service, file_id)
 
 def add_permission(email, service, file_id):
     new_permission = {
@@ -85,11 +93,7 @@ def delete_permission(file_id, permission_id, service):
     except HttpError as error:
         print ('An error occurred: %s' % error)
 
-def add_permissions_to_intructors(service, file_id):
-    with open('instructional_team.json', 'r') as f:
-        instructors = json.load(f)
-        f.close()
-
+def add_permissions_to_intructors(instructors, service, file_id):
     for i in instructors:
         add_permission(i['email'], service, file_id)
 
@@ -106,9 +110,11 @@ def parseArglist():
         'Each document is named <student prename>_<student surname>_<homework affix> and stored \nin that folder.',
         formatter_class=RawTextHelpFormatter)
     requiredArgs = parser.add_argument_group('required arguments')
-    requiredArgs.add_argument('-s', '--students', help='JSON file with student names and emails', required=True)
+    requiredArgs.add_argument('-s', '--students', help='JSON file with student prenames, surnames, and emails', required=True)
     requiredArgs.add_argument('-a', '--affix', help='affix identifying assignment (e.g., cmputXXXfXX-hwZZ)', required=False)
     requiredArgs.add_argument('-f', '--folder', help='folder in Google drive where files are created', required=True)
+    requiredArgs.add_argument('-t', '--type', help='type of artifact to be created (i.e., document or folder), document as default', required=False)
+    requiredArgs.add_argument('-i', '--instructors', help='JSON file with instructional team emails', required=False)
 
     args = parser.parse_args()
     return args
@@ -128,7 +134,14 @@ if __name__ == '__main__':
         students = json.load(f)
         f.close()
 
-    main(args.folder, students, args.affix)
+    if args.instructors:
+        with open(args.instructors, 'r') as f:
+            instructors = json.load(f)
+            f.close()
+    else:
+        instructors = None
+
+    main(args.folder, students, args.type, args.affix, instructors)
 
     # write back with the drive ids for the documents.
     with open(args.students, 'w') as f:
