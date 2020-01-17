@@ -50,7 +50,7 @@ def main(driveFolder, students, type, homework_affix, instructors):
 
             file_metadata = {
                'name': documentName,
-               'mimeType' : TYPES[type],
+               'mimeType': TYPES[type] if type else TYPES['document'],
                'parents': [folder_id],
                "writersCanShare": False
             }
@@ -110,10 +110,10 @@ def parseArglist():
         'Each document is named <student prename>_<student surname>_<homework affix> and stored \nin that folder.',
         formatter_class=RawTextHelpFormatter)
     requiredArgs = parser.add_argument_group('required arguments')
-    requiredArgs.add_argument('-s', '--students', help='JSON file with student names and emails', required=True)
+    requiredArgs.add_argument('-s', '--students', help='JSON file with student prenames, surnames, and emails', required=True)
     requiredArgs.add_argument('-a', '--affix', help='affix identifying assignment (e.g., cmputXXXfXX-hwZZ)', required=False)
     requiredArgs.add_argument('-f', '--folder', help='folder in Google drive where files are created', required=True)
-    requiredArgs.add_argument('-t', '--type', help='type of artifact to be created (i.e., document or folder)', required=True)
+    requiredArgs.add_argument('-t', '--type', help='type of artifact to be created (i.e., document or folder), document as default', required=False)
     requiredArgs.add_argument('-i', '--instructors', help='JSON file with instructional team emails', required=False)
 
     args = parser.parse_args()
