@@ -6,10 +6,16 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 import argparse
 import json
 
+TYPES = {'document': 'application/vnd.google-apps.document',
+         'folder': 'application/vnd.google-apps.folder'}
+
 # If modifying these scopes, delete the file token.json.
 SCOPES = 'https://www.googleapis.com/auth/drive'
 
-def main(driveFolder, students, homeworkAffix):
+def string_or_empty(string):
+    return '_' + string  if string else ''
+
+def main(driveFolder, students, type, homework_affix, instructors):
     flow = InstalledAppFlow.from_client_secrets_file(
                 'credentials.json', SCOPES)
     creds = flow.run_local_server(port=0)
@@ -44,7 +50,7 @@ def main(driveFolder, students, homeworkAffix):
 
             file_metadata = {
                'name': documentName,
-               'mimeType' : 'application/vnd.google-apps.document',
+               'mimeType' : TYPES[type],
                'parents': [folder_id],
                "writersCanShare": False
             }
@@ -109,6 +115,8 @@ def parseArglist():
     requiredArgs.add_argument('-s', '--students', help='JSON file with student names and emails', required=True)
     requiredArgs.add_argument('-a', '--affix', help='affix identifying assignment (e.g., cmputXXXfXX-hwZZ)', required=False)
     requiredArgs.add_argument('-f', '--folder', help='folder in Google drive where files are created', required=True)
+    requiredArgs.add_argument('-t', '--type', help='type of artifact to be created (i.e., document or folder)', required=True)
+    requiredArgs.add_argument('-i', '--instructors', help='JSON file with instructional team emails', required=False)
 
     args = parser.parse_args()
     return args
