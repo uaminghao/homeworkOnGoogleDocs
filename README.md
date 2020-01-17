@@ -7,15 +7,26 @@ homework for grading.
 
 * `-a` or `--affix`: a mnemonic affix that will end the name of the document for the student (e.g., `cmputXYZ-wTT-hwN`)
 * `-f` or `--folder`: the name of the folder in drive where the documents are stored
-* `-s` or `--students`: JSON file with three fields per student: name, email, and id, which are used to name the document
+* `-s` or `--students`: JSON file with three fields per student: prename, surname, and email, which are used to name the document
+* `-t` or `--type`: type of artifact to be created (i.e., `document` or `folder`), `document` as default
+* `-i` or `--instructors`: JSON file with one email field per member of the instructional team, which is used to share the document
 
 
 Sample JSON file with student list:
 
 ```
 [
-  {"prename": "Alice", "surname": "Wonderland", "email": "alice@wonderland", "student_id": "123"},
-  {"prename": "Bob", "surname": "Builder", "email": "bob@builder", "student_id": "234"}
+  {"prename": "Alice", "surname": "Wonderland", "email": "alice@wonderland"},
+  {"prename": "Bob", "surname": "Builder", "email": "bob@builder"}
+]
+```
+
+Sample JSON file with instructional team list:
+
+```
+[
+  {"email": "white@rabbit"},
+  {"email": "cheshire@cat"}
 ]
 ```
 
@@ -32,7 +43,7 @@ If the folder is found, the program creates a blank document for each student li
 
 Example:
 ```
-python create_and_share_google_docs.py -f cmput391w19hw1 -a "cmput391 w19 hw1" -s students.json
+python create_and_share_google_docs.py -f cmput391w19hw1 -a "cmput391 w19 hw1" -s students.json -t document
 ```
 
 Would create documents `Alice_Wonderland_cmput391 w19 hw1` and `Bob_Builder_cmput391 w19 hw1` inside folder with name **cmput391w19hw1**.
