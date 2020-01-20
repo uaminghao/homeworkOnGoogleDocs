@@ -42,14 +42,14 @@ def create_files(drive_folder, students, type, homework_affix, instructors):
             print('Found folder with Drive id: ' + folder_id)
 
         for student in students:
-            documentName =  student['prename'] + '_' + student['surname'] + string_or_empty(homework_affix)
+            documentName =  student['surname'] + '_' + student['prename'] + string_or_empty(homework_affix)
 
             # test if document exists for this student already
             check = service.files().list(q="mimeType = 'application/vnd.google-apps.document' and name='"+documentName+"'",
                                          pageSize=1, fields="nextPageToken, files(id, name)").execute().get('files', [])
 
             if check:
-                print(student['prename'] + " " + student['surname'] +' already has a file on drive for this assignment.')
+                print(student['surname'] + " " + student['prename'] +' already has a file on drive for this assignment.')
                 continue
 
             file_metadata = {
@@ -62,7 +62,7 @@ def create_files(drive_folder, students, type, homework_affix, instructors):
             studentSharedDoc = service.files().create(body=file_metadata, fields='id').execute()
             file_id = studentSharedDoc.get('id')
 
-            print(student['prename'] + " " + student['surname'] + " " + file_id)
+            print(student['surname'] + " " + student['prename'] + " " + file_id)
             student[string_or_empty(homework_affix) + ' drive id'] = file_id
 
             list_permissions = service.permissions().list(fileId=file_id).execute()
