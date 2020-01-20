@@ -1,33 +1,37 @@
-from googleapiclient.discovery import build
-from urllib.error import HTTPError
-from oauth2client import file
-from google_auth_oauthlib.flow import InstalledAppFlow
-
 import argparse
 import json
+
+from googleapiclient.discovery import build
+from googleapiclient import errors
+from google_auth_oauthlib.flow import InstalledAppFlow
 
 TYPES = {'document': 'application/vnd.google-apps.document',
          'folder': 'application/vnd.google-apps.folder'}
 
-# If modifying these scopes, delete the file token.json.
 SCOPES = 'https://www.googleapis.com/auth/drive'
 
-def string_or_empty(string):
-    return '_' + string  if string else ''
+def create_files(drive_folder, students, type, homework_affix, instructors):
+    """Creates files for students inside a Google Drive folder.
 
-def main(driveFolder, students, type, homework_affix, instructors):
+    :param drive_foder: folder inside which the files should be created.
+    :param students: students in the course.
+    :param type: type of file to be created, either 'document' or 'folder'.
+    :param homework_affix: affix added to the file names.
+    :param instructors: instructional team emails.
+    """
     flow = InstalledAppFlow.from_client_secrets_file(
                 'credentials.json', SCOPES)
     creds = flow.run_local_server(port=0)
 
     service = build('drive', 'v3', credentials=creds)
+
     # look for a directory on the drive with the homework name (e.g., "cmput391 f18 homework 1")
-    results = service.files().list(q="mimeType = 'application/vnd.google-apps.folder' and name='"+driveFolder+"'",
+    results = service.files().list(q="mimeType = 'application/vnd.google-apps.folder' and name='"+drive_folder+"'",
                                    pageSize=10, fields="nextPageToken, files(id, name)").execute()
 
     items = results.get('files', [])
     if not items:
-        print('Could not find folder named: "' + driveFolder+'"')
+        print('Could not find folder named: "' + drive_folder + '"')
         exit(0)
     else:
         folder_id = None
@@ -35,7 +39,7 @@ def main(driveFolder, students, type, homework_affix, instructors):
         for item in items:
             print('{0} ({1})'.format(item['name'], item['id']))
             folder_id = item['id']
-            print('Found folder with Drive id: '+folder_id)
+            print('Found folder with Drive id: ' + folder_id)
 
         for student in students:
             documentName =  student['prename'] + '_' + student['surname'] + string_or_empty(homework_affix)
@@ -57,11 +61,12 @@ def main(driveFolder, students, type, homework_affix, instructors):
 
             studentSharedDoc = service.files().create(body=file_metadata, fields='id').execute()
             file_id = studentSharedDoc.get('id')
-            list_permissions = service.permissions().list(fileId=file_id).execute()
-            permissions = list_permissions.get('permissions')
 
             print(student['prename'] + " " + student['surname'] + " " + file_id)
             student[string_or_empty(homework_affix) + ' drive id'] = file_id
+
+            list_permissions = service.permissions().list(fileId=file_id).execute()
+            permissions = list_permissions.get('permissions')
 
             for p in permissions:
                 if p['role'] != 'owner':
@@ -69,14 +74,20 @@ def main(driveFolder, students, type, homework_affix, instructors):
 
             if 'team' in student.keys():
                 for member_email in student['team']:
-                    add_permission(member_email, service, file_id)
+                    add_permission(member_email, file_id, service)
             else:
-                add_permission(student['email'], service, file_id)
+                add_permission(student['email'], file_id, service)
 
             if instructors:
-                add_permissions_to_intructors(instructors, service, file_id)
+                add_permissions_to_intructors(instructors, file_id, service)
 
-def add_permission(email, service, file_id):
+def add_permission(email, file_id, service):
+    """Adds a new writer permission to the file.
+
+    :param email: user email.
+    :param file_id: id of the file.
+    :param service: Google Drive service.
+    """
     new_permission = {
         'emailAddress': email,
         'type': 'user',
@@ -84,31 +95,50 @@ def add_permission(email, service, file_id):
     }
     try:
         service.permissions().create(fileId=file_id, body=new_permission, sendNotificationEmail=False).execute()
-    except HttpError as error:
+    except errors.HttpError as error:
         print ('An error occurred: %s' % error)
 
 def delete_permission(file_id, permission_id, service):
+    """Removes a permission from the file.
+
+    :param file_id: id of the file.
+    :param permission_id: id of the permission being removed.
+    :param service: Google Drive service.
+    """
     try:
         service.permissions().delete(fileId=file_id, permissionId=permission_id).execute()
-    except HttpError as error:
+    except errors.HttpError as error:
         print ('An error occurred: %s' % error)
 
-def add_permissions_to_intructors(instructors, service, file_id):
+def add_permissions_to_intructors(instructors, file_id, service):
+    """Adds writer permissions to the file for the instructional team.
+
+    :param instructors: instructional team emails.
+    :param file_id: id of the file.
+    :param service: Google Drive service.
+    """
     for i in instructors:
-        add_permission(i['email'], service, file_id)
+        add_permission(i['email'], file_id, service)
 
-'''
+def string_or_empty(string):
+    """Returns a string preceded by an underscore or an empty string.
+    Depending on whether the string parameter is none or not.
 
-Uses argparse to parse the required parameters
+    :param string: string.
+    :returns: a new string.
+    """
+    return '_' + string if string else ''
 
-'''
-def parseArglist():
-    from argparse import RawTextHelpFormatter
+def parse_arg_list():
+    """Uses argparse to parse the required parameters
+
+    :returns: command line arguments.
+    """
     parser = argparse.ArgumentParser(description='Creates and shares documents on Google Drive for students to write homework.\n\n' +
         'Needs:\n a JSON file with student names and email addresses,\n a homework affix, \n a folder name.\n '+
         'There must be a folder on the drive account named with the same name as the script\'s parameter.\n\n'+
         'Each document is named <student prename>_<student surname>_<homework affix> and stored \nin that folder.',
-        formatter_class=RawTextHelpFormatter)
+        formatter_class=argparse.RawTextHelpFormatter)
     requiredArgs = parser.add_argument_group('required arguments')
     requiredArgs.add_argument('-s', '--students', help='JSON file with student prenames, surnames, and emails', required=True)
     requiredArgs.add_argument('-a', '--affix', help='affix identifying assignment (e.g., cmputXXXfXX-hwZZ)', required=False)
@@ -119,33 +149,35 @@ def parseArglist():
     args = parser.parse_args()
     return args
 
+def read_json_into_memory(filename):
+    """Uses argparse to parse the required parameters
 
-'''
+    :returns: command line arguments.
+    """
+    with open(filename, 'r') as f:
+        values = json.load(f)
+        f.close()
+    return values
 
-Main()
-
-
-'''
-if __name__ == '__main__':
-    args = parseArglist()
+def main():
+    args = parse_arg_list()
 
     # read the student file into memory
-    with open(args.students, 'r') as f:
-        students = json.load(f)
-        f.close()
+    students = read_json_into_memory(args.students)
 
     if args.instructors:
-        with open(args.instructors, 'r') as f:
-            instructors = json.load(f)
-            f.close()
+        instructors = read_json_into_memory(args.instructors)
     else:
         instructors = None
 
-    main(args.folder, students, args.type, args.affix, instructors)
+    create_files(args.folder, students, args.type, args.affix, instructors)
 
     # write back with the drive ids for the documents.
     with open(args.students, 'w') as f:
         json.dump(students, f)
         f.close()
+
+if __name__ == '__main__':
+    main()
 
 
