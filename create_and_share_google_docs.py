@@ -42,7 +42,7 @@ def create_files(drive_folder, students, type, homework_affix, instructors):
             print('Found folder with Drive id: ' + folder_id)
 
         for student in students:
-            documentName =  student['surname'] + '_' + student['prename'] + string_or_empty(homework_affix)
+            documentName =  string_or_empty(homework_affix) + '_' + student['surname'] + '_' + student['prename']
 
             # test if document exists for this student already
             check = service.files().list(q="mimeType = 'application/vnd.google-apps.document' and name='"+documentName+"'",
@@ -127,7 +127,7 @@ def string_or_empty(string):
     :param string: string.
     :returns: a new string.
     """
-    return '_' + string if string else ''
+    return  string if string else ''
 
 def parse_arg_list():
     """Uses argparse to parse the required parameters
