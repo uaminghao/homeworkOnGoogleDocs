@@ -46,7 +46,7 @@ Example:
 python create_and_share_google_docs.py -f cmput391w19hw1 -a "cmput391 w19 hw1" -s students.json -t document
 ```
 
-Would create documents `Alice_Wonderland_cmput391 w19 hw1` and `Bob_Builder_cmput391 w19 hw1` inside folder with name **cmput391w19hw1**.
+Would create documents `Wonderland_Alice_cmput391 w19 hw1` and `Builder_Bob_cmput391 w19 hw1` inside folder with name **cmput391w19hw1**.
 
 It might be best to test everything with an empty student file.
 
