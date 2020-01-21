@@ -8,7 +8,7 @@ homework for grading.
 * `-a` or `--affix`: a mnemonic affix that will end the name of the document for the student (e.g., `cmputXYZ-wTT-hwN`)
 * `-f` or `--folder`: the name of the folder in drive where the documents are stored
 * `-s` or `--students`: JSON file with three fields per student: prename, surname, and email, which are used to name the document
-* `-t` or `--type`: type of artifact to be created (i.e., `document` or `folder`), `document` as default
+* `-t` or `--type`: type of artifact to be created (i.e., `document`, `spreadsheet`, or `folder`), `document` as default
 * `-i` or `--instructors`: JSON file with one email field per member of the instructional team, which is used to share the document
 
 

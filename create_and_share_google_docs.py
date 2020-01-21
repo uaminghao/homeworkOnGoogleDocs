@@ -6,7 +6,8 @@ from googleapiclient import errors
 from google_auth_oauthlib.flow import InstalledAppFlow
 
 TYPES = {'document': 'application/vnd.google-apps.document',
-         'folder': 'application/vnd.google-apps.folder'}
+         'folder': 'application/vnd.google-apps.folder',
+         'spreadsheet': 'application/vnd.google-apps.spreadsheet'}
 
 SCOPES = 'https://www.googleapis.com/auth/drive'
 
@@ -143,7 +144,7 @@ def parse_arg_list():
     requiredArgs.add_argument('-s', '--students', help='JSON file with student prenames, surnames, and emails', required=True)
     requiredArgs.add_argument('-a', '--affix', help='affix identifying assignment (e.g., cmputXXXfXX-hwZZ)', required=False)
     requiredArgs.add_argument('-f', '--folder', help='folder in Google drive where files are created', required=True)
-    requiredArgs.add_argument('-t', '--type', help='type of artifact to be created (i.e., document or folder), document as default', required=False)
+    requiredArgs.add_argument('-t', '--type', help='type of artifact to be created (i.e., document, spreadsheet, or folder), document as default', required=False)
     requiredArgs.add_argument('-i', '--instructors', help='JSON file with instructional team emails', required=False)
 
     args = parser.parse_args()
