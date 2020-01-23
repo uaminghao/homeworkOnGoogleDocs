@@ -1,5 +1,6 @@
-# Do not updload access tokens nor student id lists!
+# Do not updload access tokens or student id lists!
 *.json
+*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
