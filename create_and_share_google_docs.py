@@ -26,61 +26,91 @@ def create_files(drive_folder, students, type, homework_affix, instructors):
 
     service = build('drive', 'v3', credentials=creds)
 
+    items = get_folder_id(service, drive_folder)
+
+    folder_id = None
+
+    for item in items:
+        print('{0} ({1})'.format(item['name'], item['id']))
+        folder_id = item['id']
+        print('Found folder with Drive id: ' + folder_id)
+
+    for student in students:
+        if "team" in student.keys():
+            is_team = True
+            id = student['team']
+            document_name = string_or_empty(homework_affix) + student["team"]
+            if type == 'document' or type == 'spreadsheet':
+                folders = get_folder_id(service, id)
+                folder_id = folders[0]['id']
+                document_name += combine_surnames(student['surnames'])
+        else:
+            is_team = False
+            id = student['surname'] + " " + student['prename']
+            document_name = student['surname'] + '_' + student['prename'] + '_' + string_or_empty(homework_affix)
+
+        # test if document exists for this student already
+        check = service.files().list(q="mimeType = 'application/vnd.google-apps.document' and name='"+document_name+"'",
+                                        pageSize=1, fields="nextPageToken, files(id, name)").execute().get('files', [])
+
+        if check:
+            print(id + ' already has a file on drive for this assignment.')
+            continue
+
+        file_metadata = {
+            'name': document_name,
+            'mimeType': TYPES[type] if type else TYPES['document'],
+            'parents': [folder_id],
+            "writersCanShare": False
+        }
+
+        studentSharedDoc = service.files().create(body=file_metadata, fields='id').execute()
+        file_id = studentSharedDoc.get('id')
+
+        print(id + " " + file_id)
+        student[string_or_empty(homework_affix) + ' drive id'] = file_id
+
+        list_permissions = service.permissions().list(fileId=file_id).execute()
+        permissions = list_permissions.get('permissions')
+
+        for p in permissions:
+            if p['role'] != 'owner':
+                delete_permission(file_id, p['id'], service)
+
+        if is_team:
+            for member_ccid in student['ccids']:
+                member_email = member_ccid + '@ualberta.ca'
+                add_permission(member_email, file_id, service)
+        else:
+            add_permission(student['email'], file_id, service)
+
+        if instructors:
+            add_permissions_to_intructors(instructors, file_id, service)
+
+def combine_surnames(surnames):
+    """Creates a string with the students surnames separated by underscores.
+    :param surnames: list of student surnames.
+    :returns: a string.
+    """
+    string = ''
+    for s in surnames:
+        string += '_' + s
+    return string
+
+def get_folder_id(service, drive_folder):
+    """Retrieve folder id from Google Drive.
+    :param service: Google Drive service.
+    :param drive_folder: folder name.
+    :returns: a list of folders that match the param name.
+    """
     # look for a directory on the drive with the homework name (e.g., "cmput391 f18 homework 1")
     results = service.files().list(q="mimeType = 'application/vnd.google-apps.folder' and name='"+drive_folder+"'",
                                    pageSize=10, fields="nextPageToken, files(id, name)").execute()
-
     items = results.get('files', [])
     if not items:
         print('Could not find folder named: "' + drive_folder + '"')
         exit(0)
-    else:
-        folder_id = None
-
-        for item in items:
-            print('{0} ({1})'.format(item['name'], item['id']))
-            folder_id = item['id']
-            print('Found folder with Drive id: ' + folder_id)
-
-        for student in students:
-            documentName =  string_or_empty(homework_affix) + '_' + student['surname'] + '_' + student['prename']
-
-            # test if document exists for this student already
-            check = service.files().list(q="mimeType = 'application/vnd.google-apps.document' and name='"+documentName+"'",
-                                         pageSize=1, fields="nextPageToken, files(id, name)").execute().get('files', [])
-
-            if check:
-                print(student['surname'] + " " + student['prename'] +' already has a file on drive for this assignment.')
-                continue
-
-            file_metadata = {
-               'name': documentName,
-               'mimeType': TYPES[type] if type else TYPES['document'],
-               'parents': [folder_id],
-               "writersCanShare": False
-            }
-
-            studentSharedDoc = service.files().create(body=file_metadata, fields='id').execute()
-            file_id = studentSharedDoc.get('id')
-
-            print(student['surname'] + " " + student['prename'] + " " + file_id)
-            student[string_or_empty(homework_affix) + ' drive id'] = file_id
-
-            list_permissions = service.permissions().list(fileId=file_id).execute()
-            permissions = list_permissions.get('permissions')
-
-            for p in permissions:
-                if p['role'] != 'owner':
-                    delete_permission(file_id, p['id'], service)
-
-            if 'team' in student.keys():
-                for member_email in student['team']:
-                    add_permission(member_email, file_id, service)
-            else:
-                add_permission(student['email'], file_id, service)
-
-            if instructors:
-                add_permissions_to_intructors(instructors, file_id, service)
+    return items
 
 def add_permission(email, file_id, service):
     """Adds a new writer permission to the file.
