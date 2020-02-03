@@ -11,7 +11,7 @@ TYPES = {'document': 'application/vnd.google-apps.document',
 
 SCOPES = 'https://www.googleapis.com/auth/drive'
 
-def create_files(drive_folder, students, type, homework_affix, instructors):
+def create_files(drive_folder, students, type, homework_affix, instructors, is_group):
     """Creates files for students inside a Google Drive folder.
 
     :param drive_foder: folder inside which the files should be created.
@@ -39,8 +39,8 @@ def create_files(drive_folder, students, type, homework_affix, instructors):
         if "team" in student.keys():
             is_team = True
             id = student['team']
-            document_name = string_or_empty(homework_affix) + student["team"]
-            if type == 'document' or type == 'spreadsheet':
+            document_name = string_or_empty(homework_affix) + student['team']
+            if is_group:
                 folders = get_folder_id(service, id)
                 folder_id = folders[0]['id']
                 document_name += combine_surnames(student['surnames'])
@@ -176,6 +176,7 @@ def parse_arg_list():
     requiredArgs.add_argument('-f', '--folder', help='folder in Google drive where files are created', required=True)
     requiredArgs.add_argument('-t', '--type', help='type of artifact to be created (i.e., document, spreadsheet, or folder), document as default', required=False)
     requiredArgs.add_argument('-i', '--instructors', help='JSON file with instructional team emails', required=False)
+    requiredArgs.add_argument('-g', '--group', help='boolean to indicate if it is a group project and the file should be inside the group folder', required=False)
 
     args = parser.parse_args()
     return args
@@ -201,7 +202,7 @@ def main():
     else:
         instructors = None
 
-    create_files(args.folder, students, args.type, args.affix, instructors)
+    create_files(args.folder, students, args.type, args.affix, instructors, args.group)
 
     # write back with the drive ids for the documents.
     with open(args.students, 'w') as f:
