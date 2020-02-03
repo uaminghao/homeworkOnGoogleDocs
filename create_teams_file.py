@@ -2,7 +2,7 @@ import argparse
 import csv
 import json
 
-TEAM = 2
+TEAM = 1
 
 def parse_arg_list():
     """Uses argparse to parse the required parameters
@@ -32,10 +32,10 @@ def main():
         team['ccids'] = []
         team['surnames'] = []
         for j in range(TEAM + 1, len(row)):
-          if j % 2 == 0 and row[j]:
+          if j % 2 == 1 and row[j]:
             team['ccids'].append(row[j].lower())
-          elif j % 2 == 1 and row[j]:
-            team['surnames'].append(row[j].split()[-1])
+          elif j % 2 == 0 and row[j]:
+            team['surnames'].append(row[j].split()[-1].strip())
         teams.append(team)
 
   with open(args.output, 'w') as outfile:
