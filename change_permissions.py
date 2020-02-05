@@ -8,7 +8,6 @@ SCOPES = 'https://www.googleapis.com/auth/drive'
 
 def change_permissions(drive_folder, affix):
     """Updates permissions for selected files.
-
     :param drive_foder: files' parent folder.
     :param affix: affix used to filter the file names.
     """
@@ -29,19 +28,19 @@ def change_permissions(drive_folder, affix):
     }
 
     for file in files:
-      if not affix or affix in file['name']:
-        try:
-          file_id = file['id']
-          list_permissions = service.permissions().list(fileId=file_id).execute()
-          permissions = list_permissions.get('permissions')
-          for p in permissions:
-            if p['role'] != 'owner':
-              try:
-                service.permissions().update(fileId=file_id, permissionId=p['id'], body=updated_permission).execute()
-              except errors.HttpError as error:
-                print ('An error occurred: %s' % error)
-        except errors.HttpError as error:
-          print ('An error occurred: %s' % error)
+        if not affix or affix in file['name']:
+            try:
+                file_id = file['id']
+                list_permissions = service.permissions().list(fileId=file_id).execute()
+                permissions = list_permissions.get('permissions')
+                for p in permissions:
+                    if p['role'] != 'owner':
+                        try:
+                            service.permissions().update(fileId=file_id, permissionId=p['id'], body=updated_permission).execute()
+                        except errors.HttpError as error:
+                            print('An error occurred: %s' % error)
+            except errors.HttpError as error:
+                print('An error occurred: %s' % error)
 
 def get_folder_id(service, drive_folder):
     """Retrieve folder id from Google Drive.
