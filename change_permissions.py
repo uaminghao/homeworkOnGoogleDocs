@@ -22,7 +22,7 @@ def change_permissions(drive_folder, affix):
     folder_id = items[0]['id']
 
     files = service.files().list(q="'"+folder_id+"' in parents",
-                                 pageSize=100, fields="nextPageToken, files(id, name)").execute().get('files', [])
+                                 pageSize=500, fields="nextPageToken, files(id, name)").execute().get('files', [])
     updated_permission = {
         'role': 'commenter'
     }
