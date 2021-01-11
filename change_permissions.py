@@ -24,7 +24,7 @@ def change_permissions(drive_folder, affix):
     files = service.files().list(q="'"+folder_id+"' in parents",
                                  pageSize=500, fields="nextPageToken, files(id, name)").execute().get('files', [])
     updated_permission = {
-        'role': 'commenter'
+        'role': 'reader'
     }
 
     for file in files:
