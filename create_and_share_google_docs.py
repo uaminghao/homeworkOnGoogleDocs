@@ -47,7 +47,8 @@ def create_files(drive_folder, students, type, homework_affix, instructors, is_g
         else:
             is_team = False
             id = student['surname'] + " " + student['prename']
-            document_name = student['surname'] + '_' + student['prename'] + '_' + string_or_empty(homework_affix)
+            document_name = string_or_empty(homework_affix) + '_' + \
+                student['surname'] + '_' + student['prename']
 
         # test if document exists for this student already
         check = service.files().list(q="mimeType = 'application/vnd.google-apps.document' and name='"+document_name+"'",
