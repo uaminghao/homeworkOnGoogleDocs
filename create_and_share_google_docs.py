@@ -43,58 +43,56 @@ def create_files(drive_folder, students, type, homework_affix, instructors, is_g
             if is_group:
                 folders = get_folder_id(service, id)
                 folder_id = folders[0]['id']
-                document_name += combine_surnames(student['surnames'])
+                document_name += combine_lastnames(student['lastnames'])
         else:
             is_team = False
-            id = student['surname'] + " " + student['prename']
+            id = student['lastname'] + " " + student['firstname']
             document_name = string_or_empty(homework_affix) + '_' + \
-                student['surname'] + '_' + student['prename']
+                student['lastname'] + '_' + student['firstname']
 
         # test if document exists for this student already
-        check = service.files().list(q="mimeType = 'application/vnd.google-apps.document' and name='"+document_name+"'",
+        check = service.files().list(q="mimeType = 'application/vnd.google-apps."+type+"' and name='"+document_name+"'",
                                         pageSize=1, fields="nextPageToken, files(id, name)").execute().get('files', [])
-
         if check:
             print(id + ' already has a file on drive for this assignment.')
-            continue
-
-        file_metadata = {
-            'name': document_name,
-            'mimeType': TYPES[type] if type else TYPES['document'],
-            'parents': [folder_id],
-            "writersCanShare": False
-        }
-
-        studentSharedDoc = service.files().create(body=file_metadata, fields='id').execute()
-        file_id = studentSharedDoc.get('id')
-
-        print(id + " " + file_id)
-        student[string_or_empty(homework_affix) + ' drive id'] = file_id
-
-        list_permissions = service.permissions().list(fileId=file_id).execute()
-        permissions = list_permissions.get('permissions')
-
-        for p in permissions:
-            if p['role'] != 'owner':
-                delete_permission(file_id, p['id'], service)
-
-        if is_team:
-            for member_ccid in student['ccids']:
-                member_email = member_ccid + '@ualberta.ca'
-                add_permission(member_email, file_id, service)
         else:
-            add_permission(student['email'], file_id, service)
+            file_metadata = {
+                'name': document_name,
+                'mimeType': TYPES[type] if type else TYPES['document'],
+                'parents': [folder_id],
+                "writersCanShare": False
+            }
 
-        if instructors:
-            add_permissions_to_intructors(instructors, file_id, service)
+            studentSharedDoc = service.files().create(body=file_metadata, fields='id').execute()
+            file_id = studentSharedDoc.get('id')
 
-def combine_surnames(surnames):
-    """Creates a string with the students surnames separated by underscores.
-    :param surnames: list of student surnames.
+            print(id + " " + file_id)
+            student[string_or_empty(homework_affix) + ' drive id'] = file_id
+
+            list_permissions = service.permissions().list(fileId=file_id).execute()
+            permissions = list_permissions.get('permissions')
+
+            for p in permissions:
+                if p['role'] != 'owner':
+                    delete_permission(file_id, p['id'], service)
+
+            if is_team:
+                for member_ccid in student['ccids']:
+                    member_email = member_ccid + '@ualberta.ca'
+                    add_permission(member_email, file_id, service)
+            else:
+                add_permission(student['email'], file_id, service)
+
+            if instructors:
+                add_permissions_to_intructors(instructors, file_id, service)
+
+def combine_lastnames(lastnames):
+    """Creates a string with the students lastnames separated by underscores.
+    :param lastnames: list of student lastnames.
     :returns: a string.
     """
     string = ''
-    for s in surnames:
+    for s in lastnames:
         string += '_' + s
     return string
 
@@ -169,10 +167,10 @@ def parse_arg_list():
     parser = argparse.ArgumentParser(description='Creates and shares documents on Google Drive for students to write homework.\n\n' +
         'Needs:\n a JSON file with student names and email addresses,\n a homework affix, \n a folder name.\n '+
         'There must be a folder on the drive account named with the same name as the script\'s parameter.\n\n'+
-        'Each document is named <student prename>_<student surname>_<homework affix> and stored \nin that folder.',
+        'Each document is named <student firstname>_<student lastname>_<homework affix> and stored \nin that folder.',
         formatter_class=argparse.RawTextHelpFormatter)
     requiredArgs = parser.add_argument_group('required arguments')
-    requiredArgs.add_argument('-s', '--students', help='JSON file with student prenames, surnames, and emails', required=True)
+    requiredArgs.add_argument('-s', '--students', help='JSON file with student firstnames, lastnames, and emails', required=True)
     requiredArgs.add_argument('-a', '--affix', help='affix identifying assignment (e.g., cmputXXXfXX-hwZZ)', required=False)
     requiredArgs.add_argument('-f', '--folder', help='folder in Google drive where files are created', required=True)
     requiredArgs.add_argument('-t', '--type', help='type of artifact to be created (i.e., document, spreadsheet, or folder), document as default', required=False)
