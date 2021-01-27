@@ -2,28 +2,40 @@ import argparse
 import json
 
 from googleapiclient.discovery import build
-from googleapiclient import errors
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-TYPES = {'document': 'application/vnd.google-apps.document',
-         'folder': 'application/vnd.google-apps.folder',
-         'spreadsheet': 'application/vnd.google-apps.spreadsheet'}
-
-SCOPES = 'https://www.googleapis.com/auth/drive'
+from constant import SCOPES
+from utils import add_permission, delete_permission, \
+                  get_folder_id, read_json_into_memory
 
 
-def create_permissions(drive_folder, students, role):
+def delete_existing_permissions(service, drive_folder):
+    instructors = ["demmanse@ualberta.ca", "ywang3@ualberta.ca",
+                   "minghaocai@ualberta.ca", "fariaswa@ualberta.ca",
+                   "bpowers@ualberta.ca", "boytang@ualberta.ca"]
+
+    results = service.files().list(
+        q="mimeType = 'application/vnd.google-apps.folder' and name='"+drive_folder+"'",
+        pageSize=10, fields="nextPageToken, files(id, name)").execute()
+    items = results.get('files', [])
+    for item in items:
+        print('{0} ({1})'.format(item['name'], item['id']))
+        folder_id = item['id']
+
+    list_permissions = service.permissions().list(fileId=folder_id, fields='*').execute()
+    permissions = list_permissions.get('permissions')
+
+    for p in permissions:
+        if p['role'] != 'owner' and p['emailAddress'] not in instructors:
+            delete_permission(folder_id, p['id'], service)
+
+
+def create_permissions(service, drive_folder, students, role):
     """Creates permissions to a Google Drive folder.
 
     :param drive_foder: folder.
     :param students: students in the course.
     """
-    flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
-    creds = flow.run_local_server(port=0)
-
-    service = build('drive', 'v3', credentials=creds)
-
     items = get_folder_id(service, drive_folder)
 
     folder_id = None
@@ -37,41 +49,6 @@ def create_permissions(drive_folder, students, role):
         add_permission(student['email'], folder_id, service, role)
 
 
-def get_folder_id(service, drive_folder):
-    """Retrieve folder id from Google Drive.
-
-    :param service: Google Drive service.
-    :param drive_folder: folder name.
-    :returns: a list of folders that match the param name.
-    """
-    results = service.files().list(q="mimeType = 'application/vnd.google-apps.folder' and name='"+drive_folder+"'",
-                                   pageSize=10, fields="nextPageToken, files(id, name)").execute()
-    items = results.get('files', [])
-    if not items:
-        print('Could not find folder named: "' + drive_folder + '"')
-        exit(0)
-    return items
-
-
-def add_permission(email, file_id, service, role):
-    """Adds a new writer permission to the file.
-
-    :param email: user email.
-    :param file_id: id of the file.
-    :param service: Google Drive service.
-    :param role: permission type.
-    """
-    new_permission = {
-        'emailAddress': email,
-        'type': 'user',
-        'role': role
-    }
-    try:
-        service.permissions().create(fileId=file_id, body=new_permission, sendNotificationEmail=False).execute()
-    except errors.HttpError as error:
-        print('An error occurred: %s' % error)
-
-
 def parse_arg_list():
     """Uses argparse to parse the required parameters
 
@@ -79,23 +56,18 @@ def parse_arg_list():
     """
     parser = argparse.ArgumentParser()
     required_args = parser.add_argument_group('required arguments')
-    required_args.add_argument('-s', '--students', help='JSON file with student prenames, surnames, and emails', required=True)
-    required_args.add_argument('-f', '--folder', help='folder in Google drive where files are created', required=True)
-    required_args.add_argument('-r', '--role', help='permission role (i.e., fileOrganizer, write, commenter, or reader)', required=True)
+    required_args.add_argument(
+        '-s', '--students',
+        help='JSON file with student prenames, surnames, and emails', required=True)
+    required_args.add_argument(
+        '-f', '--folder',
+        help='folder in Google drive where files are created', required=True)
+    required_args.add_argument(
+        '-r', '--role',
+        help='permission role (i.e., fileOrganizer, writer, commenter, or reader)', required=True)
 
     args = parser.parse_args()
     return args
-
-
-def read_json_into_memory(filename):
-    """Uses argparse to parse the required parameters
-
-    :returns: command line arguments.
-    """
-    with open(filename, 'r') as f:
-        values = json.load(f)
-        f.close()
-    return values
 
 
 def main():
@@ -104,7 +76,14 @@ def main():
     # read the student file into memory
     students = read_json_into_memory(args.students)
 
-    create_permissions(args.folder, students, args.role)
+    flow = InstalledAppFlow.from_client_secrets_file(
+        'credentials.json', SCOPES)
+    creds = flow.run_local_server(port=0)
+
+    service = build('drive', 'v3', credentials=creds)
+
+    delete_existing_permissions(service, args.folder)
+    create_permissions(service, args.folder, students, args.role)
 
     # write back with the drive ids for the documents.
     with open(args.students, 'w') as f:

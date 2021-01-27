@@ -1,8 +1,7 @@
 import argparse
-import csv
 import json
+import pandas as pd
 
-TEAM = 1
 
 def parse_arg_list():
     """Uses argparse to parse the required parameters
@@ -20,26 +19,24 @@ def parse_arg_list():
     return args
 
 def main():
-  args = parse_arg_list()
-
-  teams = []
-  with open(args.input) as csv_file:
-    csv_reader = csv.reader(csv_file, delimiter=',')
-    for i, row in enumerate(csv_reader):
-      if i > 1:
+    teams = []
+    args = parse_arg_list()
+    df = pd.read_csv(args.input, index_col=[0])
+    cols = df.columns
+    for col in cols:
         team = {}
-        team['team'] = row[TEAM]
-        team['ccids'] = []
-        team['surnames'] = []
-        for j in range(TEAM + 1, len(row)):
-          if j % 2 == 1 and row[j]:
-            team['ccids'].append(row[j].lower())
-          elif j % 2 == 0 and row[j]:
-            team['surnames'].append(row[j].split()[-1].strip())
+        lastnames = []
+        ccids = []
+        team['team'] = "Thurs_" + str(col)
+        for i in range(1, 15, 3):
+            lastnames.append(df.iloc[i][col])
+            ccids.append(df.iloc[i+1][col])
+        team['lastnames'] = lastnames
+        team['ccids'] = ccids
         teams.append(team)
+    with open(args.output, 'w') as outfile:
+        json.dump(teams, outfile)
 
-  with open(args.output, 'w') as outfile:
-    json.dump(teams, outfile)
 
 if __name__ == '__main__':
     main()
