@@ -50,6 +50,10 @@ Would create documents `Wonderland_Alice_cmput391 w19 hw1` and `Builder_Bob_cmpu
 
 It might be best to test everything with an empty student file.
 
+### Note
+
+After downloading the namelist json file, remove the outermost square brackets of the code. 
+
 ### Legal
 
 This code wad produced by modifying the [Python Quickstart](https://developers.google.com/drive/api/v3/quickstart/python).
