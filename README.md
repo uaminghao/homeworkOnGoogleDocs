@@ -54,6 +54,9 @@ It might be best to test everything with an empty student file.
 
 After downloading the namelist json file, remove the outermost square brackets of the code. 
 
+Running change_permissions.py for changing the permission so that only the own can edit it, after deadlines. 
+
+
 ### Legal
 
 This code wad produced by modifying the [Python Quickstart](https://developers.google.com/drive/api/v3/quickstart/python).
